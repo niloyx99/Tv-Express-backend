@@ -1,7 +1,5 @@
 import { env } from './env.js';
 
-const DEV_JWT_SECRET = 'tvexpress-dev-secret-change-in-production';
-
 export function validateEnv() {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -14,11 +12,13 @@ export function validateEnv() {
     }
   }
 
-  if (!env.jwtSecret || env.jwtSecret === DEV_JWT_SECRET) {
+  if (!env.jwtSecretFromEnv) {
     if (env.isDev) {
       warnings.push('JWT_SECRET is using dev fallback — set a strong secret for production.');
+    } else if (env.adminPassword) {
+      warnings.push('JWT_SECRET is not set — using a stable secret derived from ADMIN_PASSWORD.');
     } else {
-      errors.push('JWT_SECRET must be set to a long random value in production.');
+      errors.push('Set JWT_SECRET or ADMIN_PASSWORD in production.');
     }
   }
 
