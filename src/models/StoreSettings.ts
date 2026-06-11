@@ -1,6 +1,8 @@
 import mongoose, { Schema, type InferSchemaType } from 'mongoose';
 
 export const STORE_SUPPORT_EMAIL = 'tvexpressbd@gmail.com';
+export const DEFAULT_STORE_ADDRESS = 'Plot 14, Road 9, Sector 9, Uttara, Dhaka, Bangladesh';
+export const DEFAULT_STORE_PHONE = '01734066622';
 
 const storeSettingsSchema = new Schema(
   {
@@ -13,6 +15,8 @@ const storeSettingsSchema = new Schema(
       type: String,
       default: 'Thank you for your order! We will notify you when it ships.',
     },
+    storeAddress: { type: String, default: DEFAULT_STORE_ADDRESS },
+    storePhone: { type: String, default: DEFAULT_STORE_PHONE },
   },
   { timestamps: true, versionKey: false }
 );
@@ -30,6 +34,8 @@ export const DEFAULT_STORE_SETTINGS = {
   senderName: 'TV EXPRESS',
   replyToEmail: STORE_SUPPORT_EMAIL,
   orderConfirmTemplate: 'Thank you for your order! We will notify you when it ships.',
+  storeAddress: DEFAULT_STORE_ADDRESS,
+  storePhone: DEFAULT_STORE_PHONE,
 };
 
 const LEGACY_PLACEHOLDER_EMAILS = new Set([

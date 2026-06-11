@@ -34,12 +34,13 @@ const orderSchema = new Schema(
     paymentMethod: { type: String, required: true },
     status: {
       type: String,
-      enum: ['Processing', 'Shipped', 'Delivered'],
-      default: 'Processing',
+      enum: ['Placed', 'Confirmed', 'Shipped', 'Received', 'Cancelled', 'Processing', 'Delivered'],
+      default: 'Placed',
     },
     deliveryArea: { type: String, enum: ['inside', 'outside'], default: 'inside' },
     deliveryCharge: { type: Number, default: 80 },
     subtotal: { type: Number, default: 0 },
+    clientIp: { type: String, default: '' },
   },
   { timestamps: true, versionKey: false }
 );
@@ -47,6 +48,15 @@ const orderSchema = new Schema(
 export type OrderDocument = InferSchemaType<typeof orderSchema> & { _id: mongoose.Types.ObjectId };
 
 export const Order = mongoose.model('Order', orderSchema);
+
+function normalizeStatus(status: string) {
+  const legacy: Record<string, string> = {
+    Processing: 'Confirmed',
+    Delivered: 'Received',
+    Pending: 'Placed',
+  };
+  return legacy[status] ?? status;
+}
 
 export function toPublicOrder(order: OrderDocument) {
   const city = order.shippingAddress?.city?.toLowerCase() ?? '';
@@ -62,7 +72,7 @@ export function toPublicOrder(order: OrderDocument) {
     total: order.total,
     shippingAddress: order.shippingAddress,
     paymentMethod: order.paymentMethod,
-    status: order.status,
+    status: normalizeStatus(order.status),
     deliveryArea,
     deliveryCharge,
     subtotal: order.subtotal ?? Math.max(0, order.total - deliveryCharge),

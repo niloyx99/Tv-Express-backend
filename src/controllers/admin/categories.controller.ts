@@ -74,10 +74,32 @@ export async function deleteCategory(req: AdminRequest, res: Response) {
   if (!category) throw new ApiError(404, 'Category not found');
 
   const productCount = await Product.countDocuments({ category: categoryId });
+  let reassignedTo = '';
+
   if (productCount > 0) {
-    throw new ApiError(409, `Cannot delete category with ${productCount} linked product(s). Reassign products first.`);
+    const requested = typeof req.query.reassignTo === 'string' ? req.query.reassignTo.trim() : '';
+    let targetId = requested && requested !== categoryId ? requested : '';
+
+    if (!targetId) {
+      const fallback = await ShopCategory.findOne({ id: { $nin: ['all', categoryId] } })
+        .sort({ sortOrder: 1, createdAt: 1 })
+        .lean();
+      if (!fallback) throw new ApiError(409, 'Cannot delete category: no other category exists to move products');
+      targetId = fallback.id;
+    } else {
+      const exists = await ShopCategory.findOne({ id: targetId });
+      if (!exists) throw new ApiError(400, 'Invalid reassignTo category');
+    }
+
+    await Product.updateMany({ category: categoryId }, { $set: { category: targetId } });
+    reassignedTo = targetId;
   }
 
   await ShopCategory.deleteOne({ id: categoryId });
-  res.json({ success: true, message: 'Category deleted' });
+  res.json({
+    success: true,
+    message: 'Category deleted',
+    reassignedTo: reassignedTo || undefined,
+    reassignedCount: productCount,
+  });
 }

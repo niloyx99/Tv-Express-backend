@@ -8,6 +8,8 @@ function toEmailSettingsPayload(doc: {
   senderName: string;
   replyToEmail: string;
   orderConfirmTemplate: string;
+  storeAddress: string;
+  storePhone: string;
 }) {
   return {
     supportEmail: doc.supportEmail,
@@ -15,6 +17,8 @@ function toEmailSettingsPayload(doc: {
     senderName: doc.senderName,
     replyToEmail: doc.replyToEmail,
     orderConfirmTemplate: doc.orderConfirmTemplate,
+    storeAddress: doc.storeAddress,
+    storePhone: doc.storePhone,
   };
 }
 
@@ -35,7 +39,15 @@ export async function getEmailSettings(_req: AdminRequest, res: Response) {
 
 export async function updateEmailSettings(req: AdminRequest, res: Response) {
   const doc = await getOrCreateSettings();
-  const fields = ['supportEmail', 'orderNotificationEmail', 'senderName', 'replyToEmail', 'orderConfirmTemplate'] as const;
+  const fields = [
+    'supportEmail',
+    'orderNotificationEmail',
+    'senderName',
+    'replyToEmail',
+    'orderConfirmTemplate',
+    'storeAddress',
+    'storePhone',
+  ] as const;
   for (const key of fields) {
     if (req.body[key] !== undefined) doc.set(key, req.body[key]);
   }

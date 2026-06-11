@@ -6,6 +6,7 @@ import * as authController from '../controllers/auth.controller.js';
 import * as orderController from '../controllers/order.controller.js';
 import * as blogController from '../controllers/blog.controller.js';
 import * as homeController from '../controllers/home.controller.js';
+import * as settingsController from '../controllers/settings.controller.js';
 import { requireAdmin } from '../middleware/adminAuth.middleware.js';
 import * as adminContent from '../controllers/admin/content.controller.js';
 
@@ -43,6 +44,7 @@ router.get('/products/:id', asyncHandler(productController.getProductById));
 router.get('/categories', asyncHandler(productController.getCategories));
 router.get('/blogs', asyncHandler(blogController.getBlogs));
 router.get('/home', asyncHandler(homeController.getHomeContent));
+router.get('/settings/contact', asyncHandler(settingsController.getStoreContact));
 router.post('/content/banners', requireAdmin, asyncHandler(adminContent.updateBanners));
 
 // Auth

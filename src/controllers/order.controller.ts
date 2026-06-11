@@ -1,6 +1,7 @@
 import type { Response } from 'express';
 import { Order, toPublicOrder } from '../models/Order.js';
 import { ApiError } from '../utils/ApiError.js';
+import { getClientIp } from '../utils/getClientIp.js';
 import type { AuthRequest } from '../middleware/auth.middleware.js';
 
 function generateOrderId() {
@@ -38,10 +39,11 @@ export async function createOrder(req: AuthRequest, res: Response) {
     total,
     shippingAddress,
     paymentMethod,
-    status: 'Processing',
+    status: 'Placed',
     deliveryArea: resolvedArea,
     deliveryCharge: resolvedCharge,
     subtotal: Number(subtotal ?? total),
+    clientIp: getClientIp(req),
   });
 
   res.status(201).json({
@@ -61,15 +63,7 @@ export async function getOrders(req: AuthRequest, res: Response) {
 
   res.json({
     success: true,
-    data: orders.map((order) => ({
-      id: order.orderId,
-      date: order.date,
-      items: order.items,
-      total: order.total,
-      shippingAddress: order.shippingAddress,
-      paymentMethod: order.paymentMethod,
-      status: order.status,
-    })),
+    data: orders.map((order) => toPublicOrder(order as Parameters<typeof toPublicOrder>[0])),
   });
 }
 
