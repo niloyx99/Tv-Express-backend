@@ -1,6 +1,7 @@
 import type { Response } from 'express';
 import { Product } from '../../models/Product.js';
 import { ApiError } from '../../utils/ApiError.js';
+import { computeReviewStats, normalizeReviews } from '../../utils/productReviews.js';
 import type { AdminRequest } from '../../middleware/adminAuth.middleware.js';
 
 const MAX_GALLERY = 4;
@@ -42,6 +43,8 @@ export async function createProduct(req: AdminRequest, res: Response) {
   if (exists) throw new ApiError(409, 'Product ID already exists');
 
   const gallery = normalizeGallery(body.image, body.images);
+  const reviews = normalizeReviews(body.reviews);
+  const reviewStats = computeReviewStats(reviews);
 
   const product = await Product.create({
     id: body.id,
@@ -49,8 +52,8 @@ export async function createProduct(req: AdminRequest, res: Response) {
     category: body.category,
     price: Number(body.price),
     originalPrice: Number(body.originalPrice ?? body.price),
-    rating: Number(body.rating ?? 4.5),
-    reviewsCount: Number(body.reviewsCount ?? 0),
+    rating: reviews.length ? reviewStats.rating : Number(body.rating ?? 4.5),
+    reviewsCount: reviews.length ? reviewStats.reviewsCount : Number(body.reviewsCount ?? 0),
     image: gallery.image,
     images: gallery.images,
     badge: body.badge || '',
@@ -59,6 +62,10 @@ export async function createProduct(req: AdminRequest, res: Response) {
     colors: body.colors || [],
     sizes: body.sizes || [],
     stock: Number(body.stock ?? 0),
+    detailTab: body.detailTab || {},
+    specificationTab: body.specificationTab || {},
+    shippingTab: body.shippingTab || {},
+    reviews,
   });
 
   res.status(201).json({ success: true, data: product });
@@ -88,6 +95,16 @@ export async function updateProduct(req: AdminRequest, res: Response) {
   if (req.body.colors !== undefined) product.colors = req.body.colors;
   if (req.body.sizes !== undefined) product.sizes = req.body.sizes;
   if (req.body.stock !== undefined) product.stock = Number(req.body.stock);
+  if (req.body.detailTab !== undefined) product.detailTab = req.body.detailTab;
+  if (req.body.specificationTab !== undefined) product.specificationTab = req.body.specificationTab;
+  if (req.body.shippingTab !== undefined) product.shippingTab = req.body.shippingTab;
+  if (req.body.reviews !== undefined) {
+    const reviews = normalizeReviews(req.body.reviews);
+    const reviewStats = computeReviewStats(reviews);
+    product.set('reviews', reviews);
+    product.rating = reviewStats.rating;
+    product.reviewsCount = reviewStats.reviewsCount;
+  }
 
   await product.save();
   res.json({ success: true, data: product });
